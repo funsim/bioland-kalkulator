@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+</head
+<body>
+
+<div ng-app="bioland-kalkulator" ng-controller="kalkulator">
+    <img src="https://static.wixstatic.com/media/6351f8_5971d56e88484eae90e5bc3f010d7c4c~mv2.jpg/v1/crop/x_114,y_107,w_452,h_292/fill/w_158,h_108,al_c,q_80,usm_0.66_1.00_0.01/6351f8_5971d56e88484eae90e5bc3f010d7c4c~mv2.webp" alt="Bioland">   <h1>Bioland Kalkulator</h1>
+  <h2>Input</h2>
+  <table>
+      <tr>
+          <td>Investering:</td>
+          <td><input type="number" ng-model="investering"></td>
+      </tr>
+      <tr>
+          <td>Tilskudd fra ENOVA eller Innovasjon Norge:</td> 
+          <td><input type="number" ng-model="tilskudd"></td>
+      </tr>
+      <tr>
+          <td>Investering etter tilskudd:</td> 
+          <td><span ng-bind="investering - tilskudd"></span></td>
+      </tr>
+      <tr>
+          <td>Antal kWh solgt:</td> 
+          <td><input type="number" ng-model="kwh_solgt"></td>
+      </tr>
+      <tr>
+          <td>kr/kWh innfyrt:</td> 
+          <td><input type="number" ng-model="kr_per_kwh_innfyrt"></td>
+      </tr>
+      <tr>
+          <td>kr/kWh salgskost:</td>
+          <td><input type="number" ng-model="kr_per_kwh_salgskost"></td>
+      </tr>
+      <tr>
+          <td>Avskrivningstid:</td>
+          <td><input type="number" ng-model="avskrivningstid"></td>
+      </tr>
+      <tr>
+          <td>Rente (%):</td>
+          <td><input type="number" ng-model="rente"></td>
+      </tr>
+  </table>
+
+  <h2>Energibalanse</h2>
+  <table>
+      <tr>
+          <td>Levert energi abonnenter:</td>
+          <td><span ng-bind="kwh_solgt"></span></td>
+      </tr>
+      <tr>
+          <td>Varmetap (5%):</td>
+          <td><span ng-bind="varmetap() | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Varme levert fra energisentral:</td>
+          <td><span ng-bind="kwh_solgt+varmetap() | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Virkningsgrad kjele (%):</td>
+          <td><input type="number" ng-model="virkningsgrad"></td>
+      </tr>
+      <tr>
+          <td>Tilført biobrensel:</td> 
+          <td><span ng-bind="tilfort_biobrensel() | number: 2"></span></td>
+      </tr>
+  </table>
+
+  <h2>Kostnadsberegninger</h2>
+  <table>
+      <tr>
+          <th></th>
+          <th>kr/år</th>
+          <th>øre/kWh</th>
+      </tr>
+      <tr>
+          <td>Energikostnad biobrensel:</td>
+          <td><span ng-bind="energikostnad_biobrensel() | number: 2"></span></td>
+          <td><span ng-bind="energikostnad_biobrensel()/kwh_solgt*100 | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Kaptialkostnad:</td>
+          <td><span ng-bind="kaptialkostnad() | number: 2"></span></td>
+          <td><span ng-bind="kaptialkostnad()/kwh_solgt*100 | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Drift og vedlikehold (estimert 5 øre):</td> 
+          <td><span ng-bind="drift_vedlikehold() | number: 2"></span></td>
+          <td><span ng-bind="drift_vedlikehold()/kwh_solgt*100 | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Sum varmekostnad levert eks mva:</td>
+          <td><span ng-bind="sum_varmekostnad() | number: 2"></span></td>
+          <td><span ng-bind="sum_varmekostnad()/kwh_solgt*100 | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Pris til abonnenter:</td> 
+          <td></td>
+          <td><span ng-bind="kr_per_kwh_salgskost*100 | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Resultat:</td> 
+          <td></td>
+          <td><span></span><span ng-bind="resultat() | number: 2"></span></td>
+      </tr>
+      <tr>
+          <td>Driftsresultat:</td>
+          <td><span ng-bind="resultat()/100*kwh_solgt | number: 2"></span></td>
+          <td></td>
+      </tr>
+  </table>
+</div>
+
+
+<script>
+var app = angular.module('bioland-kalkulator', []);
+app.controller('kalkulator', function($scope) {
+    $scope.varmetap = function() { return 0.05*$scope.kwh_solgt/(1.0-0.05); };
+    $scope.tilfort_biobrensel = function() { return ($scope.kwh_solgt+$scope.varmetap())/$scope.virkningsgrad*100; };
+    $scope.tmp1 = function() { return Math.pow(1+$scope.rente/100, $scope.avskrivningstid); };
+    $scope.tmp2 = function() { return $scope.tmp1()/($scope.tmp1()-1); };
+    $scope.energikostnad_biobrensel = function() { return $scope.kr_per_kwh_innfyrt*$scope.tilfort_biobrensel(); };
+    $scope.kaptialkostnad = function() { return ($scope.investering-$scope.tilskudd)*$scope.rente/100*$scope.tmp2(); };
+    $scope.drift_vedlikehold = function() { return $scope.tilfort_biobrensel()*0.05; };
+    $scope.sum_varmekostnad = function() { return $scope.energikostnad_biobrensel()+$scope.kaptialkostnad()+$scope.drift_vedlikehold(); };
+    $scope.resultat = function() { return $scope.kr_per_kwh_salgskost*100-$scope.sum_varmekostnad()/$scope.kwh_solgt*100; };
+});
+</script>
+
+</body>
+</html>
